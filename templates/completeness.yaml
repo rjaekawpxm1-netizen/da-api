@@ -1,0 +1,22 @@
+rules:
+  - id: COMP_001
+    name: 완전성_필수값누락
+    level: column
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        SUM(CASE WHEN {col} IS NULL THEN 1 ELSE 0 END) AS error_cnt
+      FROM {table}
+    detail_query: >
+      SELECT * FROM {table} WHERE {col} IS NULL
+
+  - id: COMP_002
+    name: 완전성_공백값
+    level: column
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        SUM(CASE WHEN TRIM(CAST({col} AS VARCHAR(4000))) = '' THEN 1 ELSE 0 END) AS error_cnt
+      FROM {table}
+    detail_query: >
+      SELECT * FROM {table} WHERE TRIM(CAST({col} AS VARCHAR(4000))) = ''

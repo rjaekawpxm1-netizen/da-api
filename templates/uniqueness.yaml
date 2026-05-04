@@ -1,0 +1,24 @@
+rules:
+  - id: UNIQ_001
+    name: 유일성_단일키중복
+    level: column
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        COUNT(*) - COUNT(DISTINCT {col}) AS error_cnt
+      FROM {table}
+      WHERE {col} IS NOT NULL
+
+  - id: UNIQ_002
+    name: 유일성_복합키중복
+    level: table
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        COUNT(*) - COUNT(DISTINCT {concat_cols}) AS error_cnt
+      FROM {table}
+    detail_query: >
+      SELECT {col_list}, COUNT(*) AS dup_cnt
+      FROM {table}
+      GROUP BY {col_list}
+      HAVING COUNT(*) > 1

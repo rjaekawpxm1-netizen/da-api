@@ -1,0 +1,25 @@
+rules:
+  - id: VAL_001
+    name: 유효성_날짜형식
+    level: column
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        SUM(CASE WHEN LENGTH(TRIM(CAST({col} AS VARCHAR(4000)))) NOT IN (8,10,14)
+          OR TRIM(CAST({col} AS VARCHAR(4000))) NOT REGEXP '^[0-9]{4}[-/]?[0-9]{2}[-/]?[0-9]{2}'
+          THEN 1 ELSE 0 END) AS error_cnt
+      FROM {table}
+      WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS VARCHAR(4000))) != ''
+
+  - id: VAL_002
+    name: 유효성_숫자혼입
+    level: column
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        SUM(CASE WHEN {col} REGEXP '[^0-9.\\-]' THEN 1 ELSE 0 END) AS error_cnt
+      FROM {table}
+      WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS VARCHAR(4000))) != ''
+    detail_query: >
+      SELECT * FROM {table}
+      WHERE {col} IS NOT NULL AND {col} REGEXP '[^0-9.\\-]'

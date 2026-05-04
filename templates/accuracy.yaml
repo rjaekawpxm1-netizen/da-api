@@ -1,0 +1,13 @@
+rules:
+  - id: ACC_001
+    name: 정확성_특수문자
+    level: column
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        SUM(CASE WHEN {col} REGEXP '[<>&"''\\\\]' THEN 1 ELSE 0 END) AS error_cnt
+      FROM {table}
+      WHERE {col} IS NOT NULL
+    detail_query: >
+      SELECT * FROM {table}
+      WHERE {col} IS NOT NULL AND {col} REGEXP '[<>&"''\\\\]'

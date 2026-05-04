@@ -1,0 +1,13 @@
+rules:
+  - id: CONS_001
+    name: 일관성_앞뒤공백
+    level: column
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        SUM(CASE WHEN {col} != TRIM(CAST({col} AS VARCHAR(4000))) THEN 1 ELSE 0 END) AS error_cnt
+      FROM {table}
+      WHERE {col} IS NOT NULL
+    detail_query: >
+      SELECT * FROM {table}
+      WHERE {col} IS NOT NULL AND {col} != TRIM(CAST({col} AS VARCHAR(4000)))

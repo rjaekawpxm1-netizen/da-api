@@ -1,0 +1,16 @@
+rules:
+  - id: USE_001
+    name: 유용성_더미데이터
+    level: column
+    query_template: >
+      SELECT
+        COUNT(*) AS total_cnt,
+        SUM(CASE WHEN UPPER(TRIM(CAST({col} AS VARCHAR(4000))))
+          IN ('N/A','NA','NULL','NONE','TEST','테스트','미상','없음','해당없음','N','Y')
+          THEN 1 ELSE 0 END) AS error_cnt
+      FROM {table}
+      WHERE {col} IS NOT NULL
+    detail_query: >
+      SELECT * FROM {table}
+      WHERE UPPER(TRIM(CAST({col} AS VARCHAR(4000))))
+        IN ('N/A','NA','NULL','NONE','TEST','테스트','미상','없음','해당없음')
