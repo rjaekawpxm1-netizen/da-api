@@ -1,22 +1,22 @@
 rules:
   - id: COMP_001
-    name: 완전성_필수값누락
-    level: column
+    name: "[완전성] 필수값 누락 검사"
+    description: "컬럼에 NULL 값이 있는지 확인합니다."
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        SUM(CASE WHEN {col} IS NULL THEN 1 ELSE 0 END) AS error_cnt
+      SELECT '{col}' AS column_name,
+             COUNT(*) AS total_cnt,
+             SUM(CASE WHEN {col} IS NULL THEN 1 ELSE 0 END) AS error_cnt
       FROM {table}
     detail_query: >
-      SELECT * FROM {table} WHERE {col} IS NULL
+      SELECT {col} FROM {table} WHERE {col} IS NULL
 
   - id: COMP_002
-    name: 완전성_공백값
-    level: column
+    name: "[완전성] 공백값 검사"
+    description: "값이 비어있거나 공백만 있는지 확인합니다."
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        SUM(CASE WHEN TRIM(CAST({col} AS VARCHAR(4000))) = '' THEN 1 ELSE 0 END) AS error_cnt
+      SELECT '{col}' AS column_name,
+             COUNT(*) AS total_cnt,
+             SUM(CASE WHEN {col} IS NOT NULL AND TRIM({CAST_TEXT}) = '' THEN 1 ELSE 0 END) AS error_cnt
       FROM {table}
     detail_query: >
-      SELECT * FROM {table} WHERE TRIM(CAST({col} AS VARCHAR(4000))) = ''
+      SELECT {col} FROM {table} WHERE {col} IS NOT NULL AND TRIM({CAST_TEXT}) = ''

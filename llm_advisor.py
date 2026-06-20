@@ -112,7 +112,8 @@ def _parse_json_response(response: str) -> dict:
 def recommend_column_standards(columns: list, table_name: str,
                                 column_types: dict, doc_chunks: list) -> dict:
     # 규칙 기반 빠른 추천
-    rule_based = {col: suggest_standard_name(col) for col in columns}
+    rule_based = {col: suggest_standard_name(col, actual_db_type=column_types.get(col, 'UNKNOWN'))
+                  for col in columns}
 
     query    = f"컬럼명 표준화 영문약어 {' '.join(columns[:5])}"
     relevant = get_relevant_chunks(query, doc_chunks, top_k=3)

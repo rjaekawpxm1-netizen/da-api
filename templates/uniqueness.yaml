@@ -1,24 +1,30 @@
 rules:
   - id: UNIQ_001
-    name: 유일성_단일키중복
+    name: "[유일성] 단일 컬럼 중복 검사"
+    description: "해당 컬럼에 중복 값이 존재하는지 확인합니다."
     level: column
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        COUNT(*) - COUNT(DISTINCT {col}) AS error_cnt
-      FROM {table}
-      WHERE {col} IS NOT NULL
+      SELECT '{col}' AS column_name,
+             (SELECT COUNT(*) FROM {table}) AS total_cnt,
+             COALESCE((SELECT SUM(cnt) FROM (SELECT COUNT(*) AS cnt FROM {table}
+               WHERE {col} IS NOT NULL GROUP BY {col} HAVING COUNT(*) > 1) {SUBQ_ALIAS}), 0) AS error_cnt
+      {FROM_DUMMY}
+    detail_query: >
+      SELECT {col} FROM {table}
+      WHERE {col} IN (SELECT {col} FROM {table} WHERE {col} IS NOT NULL
+                      GROUP BY {col} HAVING COUNT(*) > 1)
+      ORDER BY {col}
 
   - id: UNIQ_002
-    name: 유일성_복합키중복
+    name: "[유일성] 복합키 중복 검사 (선택한 모든 컬럼 조합)"
+    description: "선택한 컬럼들의 조합이 고유한지 검사합니다."
     level: table
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        COUNT(*) - COUNT(DISTINCT {concat_cols}) AS error_cnt
-      FROM {table}
+      SELECT {col_names} AS column_name,
+             (SELECT COUNT(*) FROM {table}) AS total_cnt,
+             COALESCE((SELECT SUM(cnt) FROM (SELECT COUNT(*) AS cnt FROM {table}
+               GROUP BY {col_list} HAVING COUNT(*) > 1) {SUBQ_ALIAS}), 0) AS error_cnt
+      {FROM_DUMMY}
     detail_query: >
-      SELECT {col_list}, COUNT(*) AS dup_cnt
-      FROM {table}
-      GROUP BY {col_list}
-      HAVING COUNT(*) > 1
+      SELECT {col_list} FROM {table}
+      GROUP BY {col_list} HAVING COUNT(*) > 1

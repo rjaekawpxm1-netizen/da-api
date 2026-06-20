@@ -1,13 +1,11 @@
 rules:
   - id: ACC_001
-    name: 정확성_특수문자
-    level: column
+    name: "[정확성] 비정상 특수문자 포함 검사"
+    description: "일반 데이터에 들어가면 안 되는 비정상 특수문자(?, !)가 포함되어 있는지 확인합니다."
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        SUM(CASE WHEN {col} REGEXP '[<>&"''\\\\]' THEN 1 ELSE 0 END) AS error_cnt
+      SELECT '{col}' AS column_name,
+             COUNT(*) AS total_cnt,
+             SUM(CASE WHEN {CAST_TEXT} LIKE '%?%' OR {CAST_TEXT} LIKE '%!%' THEN 1 ELSE 0 END) AS error_cnt
       FROM {table}
-      WHERE {col} IS NOT NULL
     detail_query: >
-      SELECT * FROM {table}
-      WHERE {col} IS NOT NULL AND {col} REGEXP '[<>&"''\\\\]'
+      SELECT {col} FROM {table} WHERE {CAST_TEXT} LIKE '%?%' OR {CAST_TEXT} LIKE '%!%'

@@ -1,13 +1,11 @@
 rules:
   - id: CONS_001
-    name: 일관성_앞뒤공백
-    level: column
+    name: "[일관성] 앞뒤 공백 포함 검사"
+    description: "데이터 앞뒤에 불필요한 공백이 포함되어 일관성을 해치는지 확인합니다."
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        SUM(CASE WHEN {col} != TRIM(CAST({col} AS VARCHAR(4000))) THEN 1 ELSE 0 END) AS error_cnt
+      SELECT '{col}' AS column_name,
+             COUNT(*) AS total_cnt,
+             SUM(CASE WHEN {CAST_TEXT} LIKE ' %' OR {CAST_TEXT} LIKE '% ' THEN 1 ELSE 0 END) AS error_cnt
       FROM {table}
-      WHERE {col} IS NOT NULL
     detail_query: >
-      SELECT * FROM {table}
-      WHERE {col} IS NOT NULL AND {col} != TRIM(CAST({col} AS VARCHAR(4000)))
+      SELECT {col} FROM {table} WHERE {CAST_TEXT} LIKE ' %' OR {CAST_TEXT} LIKE '% '

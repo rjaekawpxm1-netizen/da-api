@@ -1,14 +1,28 @@
-fastapi==0.111.0
-uvicorn[standard]==0.30.1
-python-multipart==0.0.9
-pydantic==2.7.1
-sqlalchemy==2.0.30
-pandas==2.2.2
-openpyxl==3.1.2
-pyyaml==6.0.1
-requests==2.32.3
-pymysql==1.1.1
-psycopg2-binary==2.9.9
-oracledb==2.3.0
-reportlab==4.2.0
-xlsxwriter==3.2.0
+# ── 핵심 프레임워크 ────────────────────────────
+streamlit>=1.36.0
+
+# ── 데이터 처리 ───────────────────────────────
+pandas>=2.0.0
+numpy>=1.24.0
+
+# ── DB 연결 ───────────────────────────────────
+sqlalchemy>=2.0.0
+oracledb>=2.0.0          # Oracle (Wallet/TNS/Host)
+psycopg2-binary>=2.9.0   # PostgreSQL
+pymysql>=1.1.0           # MySQL
+
+# ── 파일 처리 ─────────────────────────────────
+openpyxl>=3.1.0          # 엑셀 생성/읽기
+xlsxwriter>=3.1.0        # 엑셀 차트
+reportlab>=4.0.0         # PDF 생성
+PyPDF2>=3.0.0            # PDF 읽기 (표준화 가이드)
+pyyaml>=6.0.0            # YAML 진단 템플릿
+
+# ── 시각화 ───────────────────────────────────
+plotly>=5.15.0           # 인터랙티브 차트
+
+# ── HTTP 요청 (Claude API) ────────────────────
+requests>=2.31.0
+
+# ── 유틸리티 ─────────────────────────────────
+python-dotenv>=1.0.0     # 환경변수 관리 (.env)

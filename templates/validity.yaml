@@ -1,25 +1,28 @@
 rules:
   - id: VAL_001
-    name: 유효성_날짜형식
-    level: column
+    name: "[유효성] 날짜 형식(YYYY-MM-DD) 위배 검사"
+    description: "TEXT 컬럼이 표준 날짜 형식(YYYY-MM-DD)을 따르지 않는지 검사합니다. (DATE 타입은 자동 스킵)"
+    applies_to: "TEXT"
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        SUM(CASE WHEN LENGTH(TRIM(CAST({col} AS VARCHAR(4000)))) NOT IN (8,10,14)
-          OR TRIM(CAST({col} AS VARCHAR(4000))) NOT REGEXP '^[0-9]{4}[-/]?[0-9]{2}[-/]?[0-9]{2}'
-          THEN 1 ELSE 0 END) AS error_cnt
+      SELECT '{col}' AS column_name,
+             COUNT(*) AS total_cnt,
+             SUM(CASE WHEN {col} IS NOT NULL
+                       AND {CAST_TEXT} NOT LIKE '____-__-__' THEN 1 ELSE 0 END) AS error_cnt
       FROM {table}
-      WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS VARCHAR(4000))) != ''
+    detail_query: >
+      SELECT {col} FROM {table}
+      WHERE {col} IS NOT NULL AND {CAST_TEXT} NOT LIKE '____-__-__'
 
   - id: VAL_002
-    name: 유효성_숫자혼입
-    level: column
+    name: "[유효성] 숫자형 데이터 문자 혼입 검사"
+    description: "숫자만 들어가야 할 TEXT 컬럼에 숫자/소수점 외 문자가 있는지 검사합니다. (NUMBER 타입은 자동 스킵)"
+    applies_to: "TEXT"
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        SUM(CASE WHEN {col} REGEXP '[^0-9.\\-]' THEN 1 ELSE 0 END) AS error_cnt
+      SELECT '{col}' AS column_name,
+             COUNT(*) AS total_cnt,
+             SUM(CASE WHEN {col} IS NOT NULL
+                       AND {CAST_TEXT} {NOT_NUMERIC} THEN 1 ELSE 0 END) AS error_cnt
       FROM {table}
-      WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS VARCHAR(4000))) != ''
     detail_query: >
-      SELECT * FROM {table}
-      WHERE {col} IS NOT NULL AND {col} REGEXP '[^0-9.\\-]'
+      SELECT {col} FROM {table}
+      WHERE {col} IS NOT NULL AND {CAST_TEXT} {NOT_NUMERIC}

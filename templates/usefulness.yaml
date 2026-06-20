@@ -1,16 +1,11 @@
 rules:
   - id: USE_001
-    name: 유용성_더미데이터
-    level: column
+    name: "[유용성] 더미 데이터(미상/NA) 검사"
+    description: "'N/A','미상','알수없음','test' 등 의미 없는 더미 값이 있는지 확인합니다."
     query_template: >
-      SELECT
-        COUNT(*) AS total_cnt,
-        SUM(CASE WHEN UPPER(TRIM(CAST({col} AS VARCHAR(4000))))
-          IN ('N/A','NA','NULL','NONE','TEST','테스트','미상','없음','해당없음','N','Y')
-          THEN 1 ELSE 0 END) AS error_cnt
+      SELECT '{col}' AS column_name,
+             COUNT(*) AS total_cnt,
+             SUM(CASE WHEN UPPER({CAST_TEXT}) IN ('N/A','NA','NULL','미상','알수없음','TEST','테스트') THEN 1 ELSE 0 END) AS error_cnt
       FROM {table}
-      WHERE {col} IS NOT NULL
     detail_query: >
-      SELECT * FROM {table}
-      WHERE UPPER(TRIM(CAST({col} AS VARCHAR(4000))))
-        IN ('N/A','NA','NULL','NONE','TEST','테스트','미상','없음','해당없음')
+      SELECT {col} FROM {table} WHERE UPPER({CAST_TEXT}) IN ('N/A','NA','NULL','미상','알수없음','TEST','테스트')

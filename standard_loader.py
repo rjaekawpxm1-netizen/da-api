@@ -229,6 +229,36 @@ ENGLISH_SUFFIX_DICT = {
     '_grade'   : {'domain': '등급',     'data_type': 'CHAR',          'abbr': 'GRADE', 'confidence': 'medium'},
 }
 
+# DB 타입 보정 함수
+def _apply_db_type_correction(result: dict, actual_db_type: str) -> dict:
+    """
+    suffix 추론 결과와 실제 DB 컬럼 타입이 충돌하면 실제 타입을 우선한다.
+    예) member_id: suffix '_id'→NUMBER 추천, 실제 DB→TEXT
+        → 권장타입 VARCHAR2(50)으로 보정, 신뢰도 medium 하향
+    actual_db_type: 'NUMBER' | 'DATE' | 'TEXT' | 'UNKNOWN'
+    """
+    result = dict(result)
+    suggested_type = result.get('data_type', '') or ''
+
+    if actual_db_type == 'DATE':
+        result['data_type'] = 'DATE'
+        result['domain']    = result.get('domain') or '날짜'
+        return result
+
+    suffix_is_numeric = suggested_type.startswith('NUMBER') or suggested_type.startswith('INT')
+
+    if suffix_is_numeric and actual_db_type == 'TEXT':
+        result['data_type']  = 'VARCHAR2(50)'
+        result['confidence'] = 'medium'
+        result['note']       = f"실제 DB 타입(TEXT)과 suffix 추론(NUMBER) 불일치 → 실제 타입 기준 적용"
+    elif (not suffix_is_numeric) and actual_db_type == 'NUMBER' and suggested_type:
+        result['data_type']  = 'NUMBER'
+        result['confidence'] = 'medium'
+        result['note']       = f"실제 DB 타입(NUMBER)과 suffix 추론 불일치 → 실제 타입 기준 적용"
+
+    return result
+
+
 def _is_english_colname(name: str) -> bool:
     """영문/약어 형태의 컬럼명인지 판별 (한글 없고 언더스코어 포함)"""
     import re
@@ -275,16 +305,21 @@ def _suggest_from_english(col_name: str) -> dict:
     }
 
 
-def suggest_standard_name(korean_name: str) -> dict:
+def suggest_standard_name(korean_name: str, actual_db_type: str = None) -> dict:
     """
     컬럼명 → 표준 영문약어명 추천 (규칙 기반)
     - 한글 컬럼명: 한글 형식단어 사전으로 매칭
     - 영문 컬럼명: 영문 suffix 사전으로 매칭
+    - actual_db_type: 실제 DB 컬럼 타입('NUMBER'/'DATE'/'TEXT'/'UNKNOWN')
+                      주어지면 suffix 추론과 충돌 시 실제 타입으로 보정
     Claude API 없이도 기본 추천 가능
     """
     # 영문 컬럼명이면 영문 suffix 기반으로 처리
     if _is_english_colname(korean_name):
-        return _suggest_from_english(korean_name)
+        result = _suggest_from_english(korean_name)
+        if actual_db_type and actual_db_type != 'UNKNOWN':
+            result = _apply_db_type_correction(result, actual_db_type)
+        return result
 
     suggestions = {
         'input':        korean_name,
@@ -331,5 +366,8 @@ def suggest_standard_name(korean_name: str) -> dict:
     else:
         suggestions['recommended']  = korean_name.upper()[:20]
         suggestions['confidence']   = 'low'
+
+    if actual_db_type and actual_db_type != 'UNKNOWN':
+        suggestions = _apply_db_type_correction(suggestions, actual_db_type)
 
     return suggestions
